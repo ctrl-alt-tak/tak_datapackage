@@ -127,7 +127,7 @@ else
 fi
 
 # Remove old add new.
-if cat ../.serverconfig | grep "$START"; then
+if grep -q "$START" "$CONFIG"; then
   sed -i "/$START/,/$END/d" "$CONFIG"
 fi
 if [[ -n "$TAK_SERVER_NAME" && -n "$TAK_SERVER_IP" && -n "$TAK_SERVER_PORT" ]]; then
