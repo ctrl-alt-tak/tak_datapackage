@@ -51,7 +51,7 @@ config() {
   fi
 }
 
-# Define some bashrc, and start and end markers.
+# Define some stuff, and start and end markers for server config.
 CONFIG="../.serverconfig"
 START="# === TAK Server Environment Variables ==="
 END="# === END TAK Server Environment Variables ==="
@@ -107,7 +107,7 @@ echo -e "${RESET}"
 # Header
 echo -e "${YELLOW}"
 echo -e "MIT License"
-echo -e "Copyright (c) 2025 Jimmie Crowder"
+echo -e "Copyright (c) 2025 James Crowder"
 echo -e "${RESET}"
 
 # Show current values if they exsist.
@@ -127,7 +127,7 @@ else
 fi
 
 # Remove old add new.
-if [[ "$qconfig" == "y" || "qconfig" == "Y" ]]; then
+if cat ../.serverconfig | grep "$START"; then
   sed -i "/$START/,/$END/d" "$CONFIG"
 fi
 if [[ -n "$TAK_SERVER_NAME" && -n "$TAK_SERVER_IP" && -n "$TAK_SERVER_PORT" ]]; then
@@ -231,7 +231,7 @@ echo -e "${GREEN}Datapackage created: ${zip_filename}${RESET}"
 # chown "$uid":"$gid" "$zip_filename"
 
 # Cleanup
-echo -e "${YELLOW}Done! UUID: ${uuid_str}${RESET}"
+echo -e "${YELLOW}Done! ${callsign}${RESET}"
 
 rm -r ./MANIFEST
 rm -r ./cert
