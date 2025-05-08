@@ -1,7 +1,7 @@
 ## **TAK Datapackage Tools**
 
 
-![Tak is the way width="100" height="100"](assets/images/tak.png)
+![Tak is the way width="50" height="50"](assets/images/tak.png)
 
 
 
