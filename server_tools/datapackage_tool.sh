@@ -196,7 +196,7 @@ CLIENT_CERT_PATH="/opt/tak/certs/files/${CLIENTCERT}"
 
 writeconfig
 
-ehco "Client: ${CLIENT_CERT_PATH}"
+echo "Client: ${CLIENT_CERT_PATH}"
 echo "CA: ${CA_CERT_PATH}"
 read -p "Press enter to continue: "
 
