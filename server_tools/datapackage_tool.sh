@@ -237,7 +237,7 @@ cat <<EOF > "$manifest_file"
     <Parameter name="onReceiveDelete" value="true"/>
   </Configuration>
   <Contents>
-    <Content ignore="false" zipEntry="prefs/${server_name}.pref"/>
+    <Content ignore="false" zipEntry="prefs/${TAK_SERVER_NAME}.pref"/>
     <Content ignore="false" zipEntry="cert/$(basename "$CA_CERT")"/>
     <Content ignore="false" zipEntry="cert/$(basename "$CLIENT_CERT")"/>
   </Contents>
