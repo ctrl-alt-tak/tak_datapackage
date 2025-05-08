@@ -64,6 +64,26 @@ makeCert () {
   ./makeCert client $CLIENT --fips 
 }
 
+writeconfig () {
+  # Remove old add new.
+if grep -q "$START" "$CONFIG"; then
+  sed -i "/$START/,/$END/d" "$CONFIG"
+fi
+if [[ -n "$TAK_SERVER_NAME" && -n "$TAK_SERVER_IP" && -n "$TAK_SERVER_PORT" ]]; then
+  cat <<EOF >> "$CONFIG"
+$START
+export TAK_SERVER_NAME="$TAK_SERVER_NAME"
+export TAK_SERVER_IP="$TAK_SERVER_IP"
+export TAK_SERVER_PORT="$TAK_SERVER_PORT"
+export CACERT="$CACERT"
+$END
+EOF
+  echo "TAK environment variables set"
+else
+  echo "Values not set try again"
+fi
+}
+
 
 # Define some stuff, and start and end markers for server config.
 CONFIG="./.serverconfig"
@@ -130,6 +150,7 @@ if grep -q "$START" "$CONFIG"; then
   echo "Server Name: $TAK_SERVER_NAME"
   echo "IP Address: $TAK_SERVER_IP"
   echo "Port: $TAK_SERVER_PORT"
+  echo "CA Cert: $CACERT"
   echo "Admin Cert: $ADMIN"
   read -p "Would you like to edit this config (y/n)? " qconfig
   if [[ "$qconfig" == "y" || "$qconfig" == "Y" ]]; then
@@ -139,23 +160,6 @@ if grep -q "$START" "$CONFIG"; then
   fi
 else
   config
-fi
-
-# Remove old add new.
-if grep -q "$START" "$CONFIG"; then
-  sed -i "/$START/,/$END/d" "$CONFIG"
-fi
-if [[ -n "$TAK_SERVER_NAME" && -n "$TAK_SERVER_IP" && -n "$TAK_SERVER_PORT" ]]; then
-  cat <<EOF >> "$CONFIG"
-$START
-export TAK_SERVER_NAME="$TAK_SERVER_NAME"
-export TAK_SERVER_IP="$TAK_SERVER_IP"
-export TAK_SERVER_PORT="$TAK_SERVER_PORT"
-$END
-EOF
-  echo "TAK environment variables set"
-else
-  echo "Values not set try again"
 fi
 
 # Add role
@@ -201,6 +205,8 @@ mkdir -p cert prefs MANIFEST
 ) 
 echo -e "${GREEN}Certificates copied.${RESET}"
 
+writeconfig
+
 # Generate .pref file
 PREF_FILE="prefs/${TAK_SERVER_NAME}.pref"
 cat <<EOF > "$PREF_FILE"
@@ -210,7 +216,7 @@ cat <<EOF > "$PREF_FILE"
     <entry key="count" class="class java.lang.Integer">1</entry>
     <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
-    <entry key="connectString0" class="class java.lang.String">${TAK_IP_ADDRESS}:${port}:ssl</entry>
+    <entry key="connectString0" class="class java.lang.String">${TAK_SERVER_IP}:${TAK_SERVER_PORT}:ssl</entry>
     <entry key="caLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CA_CERT")</entry>
     <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
@@ -264,7 +270,8 @@ rm -r ./cert
 rm -r ./prefs
 
 #Push datatpackage to server
-read -p "Enter web admin cert name: " QWEBADMIN
+ls /opt/tak/certs/files | grep "admin"
+read -p "Enter web admin cert: " QWEBADMIN
 ADMIN="/opt/tak/certs/files/${QWEBADMIN}.p12"
 
 TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
