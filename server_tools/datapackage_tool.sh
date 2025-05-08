@@ -51,6 +51,10 @@ config() {
   fi
 }
 
+send_to_server() {
+  curl -vvvL  
+}
+
 # Define some stuff, and start and end markers for server config.
 CONFIG="../.serverconfig"
 START="# === TAK Server Environment Variables ==="
@@ -195,7 +199,11 @@ cat <<EOF > "$pref_file"
     <entry key="certificateLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$client_cert")</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">true</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
+</preference>
+<preference version="1" name="com.atakmap.app_preferences">
+    <entry key="displayServerConnectionWidget" class="class java.lang.Boolean">true</entry>
     <entry key="locationCallsign" class="class java.lang.String">${callsign}</entry>
+    <entry key="atakRoleType" class="class java.lang.String">${role}</entry>
 </preference>
 </preferences>
 EOF
