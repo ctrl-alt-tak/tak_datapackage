@@ -53,7 +53,7 @@ config() {
  TRUSTSTORE_PEM="${TRUSTSTORE_JKS%.jks}.pem"
  CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_JKS%.jks}.p12"
  ls /opt/tak/certs/files | grep "admin"
- read -p "Enter webadmin cert name (p12): " QWEBADMIN
+ read -p "Enter webadmin cert name (.p12): " QWEBADMIN
  ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
 }
 
@@ -194,6 +194,11 @@ read -p "Enter Client Cert (.p12): " CLIENTCERT
 #Set path
 CLIENT_CERT_PATH="/opt/tak/certs/files/${CLIENTCERT}"
 
+writeconfig
+
+ehco "Client: ${CLIENT_CERT_PATH}"
+echo "CA: ${CA_CERT_PATH}"
+read -p "Press enter to continue: "
 
 # Validate cert file paths
 if [[ ! -f "$CLIENT_CERT_PATH" || ! -f "$CA_CERT_PATH" ]]; then
@@ -212,8 +217,6 @@ mkdir -p cert prefs MANIFEST
   cp "$CA_CERT_PATH" "cert/$(basename "$CA_CERT_PATH")"
 ) 
 echo -e "${GREEN}Certificates copied.${RESET}"
-
-writeconfig
 
 # Generate .pref file
 PREF_FILE="prefs/${TAK_SERVER_NAME}.pref"
