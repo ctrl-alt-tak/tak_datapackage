@@ -31,7 +31,7 @@ if [ "$EUID" -ne 0 ]; then
 exit 1
 fi
 
-if [ -f "../.serverconfig" ]; then
+if [ -f "./.serverconfig" ]; then
  echo "Server Config Exsists"
 else
  touch ./.serverconfig
@@ -49,13 +49,18 @@ config() {
   else
    TAK_SERVER_PORT="8089"
   fi
+ TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
+ TRUSTSTORE_PEM="${TRUSTSTORE_JKS%.jks}.pem"
+ CA_CERT="/opt/tak/certs/files/${TRUSTSTORE_JKS%.jks}.p12"
+ ls /opt/tak/certs/files | grep "admin"
+ read -p "Enter webadmin cert name (p12): " QWEBADMIN
+ ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
 }
 
 sendToserver() {
   curl -vvvL  
 }
 
-#Functions for cert creation
 makeCertnonFips() {
   /opt/tak/certs/makeCert.sh client $CLIENT
 }
@@ -76,6 +81,7 @@ export TAK_SERVER_NAME="$TAK_SERVER_NAME"
 export TAK_SERVER_IP="$TAK_SERVER_IP"
 export TAK_SERVER_PORT="$TAK_SERVER_PORT"
 export CACERT="$CACERT"
+export ADMIN="$ADMIN"
 $END
 EOF
   echo "TAK environment variables set"
@@ -182,10 +188,10 @@ CERT_PASS="atakatak"
 fi
 ls /opt/tak/certs/files/
 read -p "Enter Client Cert (.p12): " CLIENTCERT
-read -p "Enter CA Cert (.p12): " CACERT
+
 #Set path
 CLIENT_CERT="/opt/tak/certs/files/${CLIENTCERT}"
-CA_CERT="/opt/tak/certs/files/${CACERT}"
+
 
 # Validate cert file paths
 if [[ ! -f "$CLIENT_CERT" || ! -f "$CA_CERT" ]]; then
@@ -250,7 +256,7 @@ cat <<EOF > "$manifest_file"
 </MissionPackageManifest>
 EOF
 
-# Zip the package
+# Zip
 zip_filename="${callsign}.zip"
 (
   zip -r "$zip_filename" cert prefs MANIFEST &>/dev/null
@@ -263,25 +269,24 @@ echo -e "${GREEN}Datapackage created: ${zip_filename}${RESET}"
 # chown "$uid":"$gid" "$zip_filename"
 
 # Cleanup
-echo -e "${YELLOW}Done! ${callsign}${RESET}"
+echo -e "${YELLOW}Done! Datapackage for ${callsign} created ${RESET}"
 
 rm -r ./MANIFEST
 rm -r ./cert
 rm -r ./prefs
 
 #Push datatpackage to server
-ls /opt/tak/certs/files | grep "admin"
-read -p "Enter web admin cert: " QWEBADMIN
-ADMIN="/opt/tak/certs/files/${QWEBADMIN}.p12"
+TRUSTSTORE_PASS=$(grep 'keystorePass=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*keystorePass="\([^"]*\)".*/\1/p')
 
-TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
-TRUSTSTORE="${TRUSTSTORE_JKS%.jks%/certs/files/}.pem"
+if [-f ${CA_CERT%.p12}.pem ]; then
+TRUSTSTORE="/opt/tak/certs/files/${TRUSTSTORE_PEM}"
+curl -vvvL POST -H "Content-Type: application/x-zip-compressed" --data-binary "@${zip_filename}" --cert $ADMIN:$CERT_PASS --cert-type P12  --cacert $TRUSTSTORE "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
+else
+openssl pkcs12 -in $CA_CERT -nokeys -out ${CA_CERT%.p12}.pem -nodes
+fi
 
 
-TRUSTSTORE_PASS=$(grep 'truststorePass=' "/opt/tak/CoreConfig.xml" | sed -n 's/.*truststorePass="\([^"]*\)".*/\1/p')
 
-#read -p "
-curl -vvvL -X POST -H "Content-Type: application/x-zip-compressed" --data-binary "@${zip_filename}" --cert $ADMIN:$CERT_PASS --cert-type P12  --cacert $TRUSTSTORE "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
 
 
 
