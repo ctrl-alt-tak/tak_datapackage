@@ -12,5 +12,5 @@
 - Transfers datapackage to TAK Server file manger and/or dir
 
 ```bash
-git clone https://github.com/ctrl-alt-tak/tak_datapackage
+git clone https://github.com/ctrl-alt-tak/tak_dpkg_tools
 ```
