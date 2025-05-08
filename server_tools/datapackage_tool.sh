@@ -51,7 +51,7 @@ config() {
   fi
  TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
  TRUSTSTORE_PEM="${TRUSTSTORE_JKS%.jks}.pem"
- CA_CERT="/opt/tak/certs/files/${TRUSTSTORE_JKS%.jks}.p12"
+ CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_JKS%.jks}.p12"
  ls /opt/tak/certs/files | grep "admin"
  read -p "Enter webadmin cert name (p12): " QWEBADMIN
  ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
@@ -82,6 +82,7 @@ export TAK_SERVER_IP="$TAK_SERVER_IP"
 export TAK_SERVER_PORT="$TAK_SERVER_PORT"
 export CACERT="$CACERT"
 export ADMIN="$ADMIN"
+export CA_CERT_PATH="$CA_CERT_PATH"
 $END
 EOF
   echo "TAK environment variables set"
@@ -157,6 +158,7 @@ if grep -q "$START" "$CONFIG"; then
   echo "IP Address: $TAK_SERVER_IP"
   echo "Port: $TAK_SERVER_PORT"
   echo "CA Cert: $CACERT"
+  echo "CA Cert Path: $CA_CERT_PATH"
   echo "Admin Cert: $ADMIN"
   read -p "Would you like to edit this config (y/n)? " qconfig
   if [[ "$qconfig" == "y" || "$qconfig" == "Y" ]]; then
@@ -190,11 +192,11 @@ ls /opt/tak/certs/files/
 read -p "Enter Client Cert (.p12): " CLIENTCERT
 
 #Set path
-CLIENT_CERT="/opt/tak/certs/files/${CLIENTCERT}"
+CLIENT_CERT_PATH="/opt/tak/certs/files/${CLIENTCERT}"
 
 
 # Validate cert file paths
-if [[ ! -f "$CLIENT_CERT" || ! -f "$CA_CERT" ]]; then
+if [[ ! -f "$CLIENT_CERT_PATH" || ! -f "$CA_CERT_PATH" ]]; then
   echo -e "${RED}Error: One or both certificate files not found!${RESET}"
   exit 1
 fi
@@ -206,8 +208,8 @@ uuid_str=$(uuidgen)
 mkdir -p cert prefs MANIFEST
 
 (
-  cp "$CLIENT_CERT" "cert/$(basename "$CLIENT_CERT")"
-  cp "$CA_CERT" "cert/$(basename "$CA_CERT")"
+  cp "$CLIENT_CERT_PATH" "cert/$(basename "$CLIENT_CERT_PATH")"
+  cp "$CA_CERT_PATH" "cert/$(basename "$CA_CERT_PATH")"
 ) 
 echo -e "${GREEN}Certificates copied.${RESET}"
 
@@ -223,10 +225,10 @@ cat <<EOF > "$PREF_FILE"
     <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
     <entry key="connectString0" class="class java.lang.String">${TAK_SERVER_IP}:${TAK_SERVER_PORT}:ssl</entry>
-    <entry key="caLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CA_CERT")</entry>
+    <entry key="caLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CA_CERT_PATH")</entry>
     <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
-    <entry key="certificateLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CLIENT_CERT")</entry>
+    <entry key="certificateLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CLIENT_CERT_PATH")</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">true</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
 </preference>
@@ -250,8 +252,8 @@ cat <<EOF > "$manifest_file"
   </Configuration>
   <Contents>
     <Content ignore="false" zipEntry="prefs/${TAK_SERVER_NAME}.pref"/>
-    <Content ignore="false" zipEntry="cert/$(basename "$CA_CERT")"/>
-    <Content ignore="false" zipEntry="cert/$(basename "$CLIENT_CERT")"/>
+    <Content ignore="false" zipEntry="cert/$(basename "$CA_CERT_PATH")"/>
+    <Content ignore="false" zipEntry="cert/$(basename "$CLIENT_CERT_PATH")"/>
   </Contents>
 </MissionPackageManifest>
 EOF
@@ -278,11 +280,13 @@ rm -r ./prefs
 #Push datatpackage to server
 TRUSTSTORE_PASS=$(grep 'keystorePass=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*keystorePass="\([^"]*\)".*/\1/p')
 
-if [-f ${CA_CERT%.p12}.pem ]; then
+if [-f ${CA_CERT_PATH%.p12}.pem ]; then
 TRUSTSTORE="/opt/tak/certs/files/${TRUSTSTORE_PEM}"
 curl -vvvL POST -H "Content-Type: application/x-zip-compressed" --data-binary "@${zip_filename}" --cert $ADMIN:$CERT_PASS --cert-type P12  --cacert $TRUSTSTORE "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
 else
-openssl pkcs12 -in $CA_CERT -nokeys -out ${CA_CERT%.p12}.pem -nodes
+echo "CA Cert needs to be converted"
+echo "Enter the cert password when promted ${TRUSTSTORE_PASS}"
+openssl pkcs12 -in $CA_CERT_PATH -nokeys -out ${CA_CERT_PATH%.p12}.pem -nodes
 fi
 
 
