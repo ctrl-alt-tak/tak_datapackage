@@ -34,10 +34,10 @@ fi
 if [ -f "../.serverconfig" ]; then
  echo "Server Config Exsists"
 else
- touch ../.serverconfig
+ touch ./.serverconfig
 fi
 
-source ../.serverconfig
+source ./.serverconfig
 
 # Functions
 config() {
@@ -51,12 +51,22 @@ config() {
   fi
 }
 
-send_to_server() {
+sendToserver() {
   curl -vvvL  
 }
 
+#Functions for cert creation
+makeCertnonFips() {
+  /opt/tak/certs/makeCert.sh client $CLIENT
+}
+
+makeCert () {
+  ./makeCert client $CLIENT --fips 
+}
+
+
 # Define some stuff, and start and end markers for server config.
-CONFIG="../.serverconfig"
+CONFIG="./.serverconfig"
 START="# === TAK Server Environment Variables ==="
 END="# === END TAK Server Environment Variables ==="
 
@@ -120,6 +130,7 @@ if grep -q "$START" "$CONFIG"; then
   echo "Server Name: $TAK_SERVER_NAME"
   echo "IP Address: $TAK_SERVER_IP"
   echo "Port: $TAK_SERVER_PORT"
+  echo "Admin Cert: $ADMIN"
   read -p "Would you like to edit this config (y/n)? " qconfig
   if [[ "$qconfig" == "y" || "$qconfig" == "Y" ]]; then
     config
@@ -148,24 +159,32 @@ else
 fi
 
 # Add role
-read -p "Add user Role (y/n)? " qrole
-if [[ "$qrole" != "n" && "qrole" != "N" ]]; then
+read -p "Add user Role (y/n)? " QROLE
+if [[ "$QROLE" != "n" && "$QROLE" != "N" ]]; then
 echo "Select Role:"
-roles=("Team Member" "Team Lead" "HQ" "Sniper" "Medic" "Forward Observer" "RTO" "K9")
-select role in "${roles[@]}"; do
-  [[ -n "$role" ]] && break
+ROLES=("Team Member" "Team Lead" "HQ" "Sniper" "Medic" "Forward Observer" "RTO" "K9")
+select ROLE in "${ROLES[@]}"; do
+  [[ -n "$ROLE" ]] && break
   echo "Invalid selection, try again."
 done
 fi
 
 read -p "Enter Callsign: " callsign
-read -s -p "Enter Cert Password: " cert_pass
-echo ""
-read -p "Enter Client Cert Path (.p12): " client_cert
-read -p "Enter CA Cert Path (.p12): " ca_cert
+read -p "Are you using the default cert pass "atakatak" (y/n)? " QPASS
+if [[ "$QPASS" != "y" && "$QPASS" != "Y" ]]; then
+read -s -p "Enter Cert Password: " CERT_PASS
+else
+CERT_PASS="atakatak"
+fi
+ls /opt/tak/certs/files/
+read -p "Enter Client Cert (.p12): " CLIENTCERT
+read -p "Enter CA Cert (.p12): " CACERT
+#Set path
+CLIENT_CERT="/opt/tak/certs/files/${CLIENTCERT}"
+CA_CERT="/opt/tak/certs/files/${CACERT}"
 
 # Validate cert file paths
-if [[ ! -f "$client_cert" || ! -f "$ca_cert" ]]; then
+if [[ ! -f "$CLIENT_CERT" || ! -f "$CA_CERT" ]]; then
   echo -e "${RED}Error: One or both certificate files not found!${RESET}"
   exit 1
 fi
@@ -176,27 +195,26 @@ uuid_str=$(uuidgen)
 # Create directories
 mkdir -p cert prefs MANIFEST
 
-# Copy cert files (with spinner)
 (
-  cp "$client_cert" "cert/$(basename "$client_cert")"
-  cp "$ca_cert" "cert/$(basename "$ca_cert")"
+  cp "$CLIENT_CERT" "cert/$(basename "$CLIENT_CERT")"
+  cp "$CA_CERT" "cert/$(basename "$CA_CERT")"
 ) 
 echo -e "${GREEN}Certificates copied.${RESET}"
 
 # Generate .pref file
-pref_file="prefs/${server_name}.pref"
-cat <<EOF > "$pref_file"
+PREF_FILE="prefs/${TAK_SERVER_NAME}.pref"
+cat <<EOF > "$PREF_FILE"
 <?xml version='1.0' standalone='yes'?>
 <preferences>
 <preference version="1" name="cot_streams">
     <entry key="count" class="class java.lang.Integer">1</entry>
-    <entry key="description0" class="class java.lang.String">${server_name}</entry>
+    <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
     <entry key="connectString0" class="class java.lang.String">${TAK_IP_ADDRESS}:${port}:ssl</entry>
-    <entry key="caLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$ca_cert")</entry>
-    <entry key="caPassword0" class="class java.lang.String">${cert_pass}</entry>
-    <entry key="clientPassword0" class="class java.lang.String">${cert_pass}</entry>
-    <entry key="certificateLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$client_cert")</entry>
+    <entry key="caLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CA_CERT")</entry>
+    <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
+    <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
+    <entry key="certificateLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CLIENT_CERT")</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">true</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
 </preference>
@@ -220,8 +238,8 @@ cat <<EOF > "$manifest_file"
   </Configuration>
   <Contents>
     <Content ignore="false" zipEntry="prefs/${server_name}.pref"/>
-    <Content ignore="false" zipEntry="cert/$(basename "$ca_cert")"/>
-    <Content ignore="false" zipEntry="cert/$(basename "$client_cert")"/>
+    <Content ignore="false" zipEntry="cert/$(basename "$CA_CERT")"/>
+    <Content ignore="false" zipEntry="cert/$(basename "$CLIENT_CERT")"/>
   </Contents>
 </MissionPackageManifest>
 EOF
@@ -245,6 +263,20 @@ rm -r ./MANIFEST
 rm -r ./cert
 rm -r ./prefs
 
-read -p "Press Enter to exit."
+#Push datatpackage to server
+read -p "Enter web admin cert name: " QWEBADMIN
+ADMIN="/opt/tak/certs/files/${QWEBADMIN}.p12"
+
+TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
+TRUSTSTORE="${TRUSTSTORE_JKS%.jks%/certs/files/}.pem"
+
+
+TRUSTSTORE_PASS=$(grep 'truststorePass=' "/opt/tak/CoreConfig.xml" | sed -n 's/.*truststorePass="\([^"]*\)".*/\1/p')
+
+#read -p "
+curl -vvvL -X POST -H "Content-Type: application/x-zip-compressed" --data-binary "@${zip_filename}" --cert $ADMIN:$CERT_PASS --cert-type P12  --cacert $TRUSTSTORE "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
+
+
+
 
 
