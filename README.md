@@ -13,5 +13,4 @@
 
 '''bash
 git clone https://github.com/ctrl-alt-tak/tak_datapackage
-'''
 
