@@ -11,6 +11,6 @@
 - Assign callsign and role (ATAK only)
 - Transfers datapackage to TAK Server file manger and/or dir
 
-'''bash
+```bash
 git clone https://github.com/ctrl-alt-tak/tak_datapackage
-
+```
