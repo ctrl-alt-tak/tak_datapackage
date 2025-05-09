@@ -313,14 +313,15 @@ if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
   echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
   echo -e "${YELLOW}Enter the password when prompted:${RESET} ${TRUSTSTORE_PASS}"
-  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes
-  echo -ne "Waiting to convert truststore: ["
-for i in {1..10}; do
-  echo -ne "#"
-  sleep 0.5
-done
-echo "] Converted!" 
+  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes 
 fi
+  
+echo -ne "Sending $ZIP_FILENAME to $TAK_SERVER_NAME: ["
+for i in {1..10}; do
+echo -ne "#"
+sleep 0.5
+done
+echo "]"
 
 # Upload datapackage via curl
 curl -vvvL -k -X POST \
@@ -328,10 +329,11 @@ curl -vvvL -k -X POST \
   --data-binary "@${ZIP_FILENAME}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
   --cacert "$TRUSTSTORE" \
-  "https://localhost:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" 
+  "https://localhost:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" &
 
+sleep 0.5
 
-
+echo "$ZIP_FILENAME sent to server, view the file at "https://${TAK_SERVER_IP}:8443/Marti/FileManager.html"
 
 
 
