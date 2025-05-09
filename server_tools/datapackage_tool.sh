@@ -289,8 +289,7 @@ TRUSTSTORE="/opt/tak/certs/files/$(basename "$TRUSTSTORE_PEM_PATH")"
 if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
   echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
-  echo -e "${YELLOW}CA Cert needs to be converted to PEM format.${RESET}"
-  echo -e "Enter the password when prompted: ${TRUSTSTORE_PASS}"
+  echo -e "${YELLOW}Enter the password when prompted:${RESET} ${TRUSTSTORE_PASS}"
   openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes
 fi
 
