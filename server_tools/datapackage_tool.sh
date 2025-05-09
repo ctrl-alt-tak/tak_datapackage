@@ -295,7 +295,7 @@ else
 fi
 
 # Upload datapackage via curl
-curl -vvvL -X POST \
+curl -vvvL -k -X POST \
   -H "Content-Type: application/x-zip-compressed" \
   --data-binary "@${zip_filename}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
