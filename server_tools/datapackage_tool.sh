@@ -193,7 +193,7 @@ done
 fi
 
 read -p "Enter Callsign: " CALLSIGN
-read -p "Are you using the default cert pass "atakatak" (y/n)? " QPASS
+read -p "Are you using the default cert pass ${YELLOW}atakatak${RESET} (y/n)? " QPASS
 if [[ "$QPASS" != "y" && "$QPASS" != "Y" ]]; then
 read -s -p "Enter Cert Password: " CERT_PASS
 else
@@ -209,16 +209,13 @@ fi
 
  select QCLIENT in "${P12_CERTS[@]}"; do
   if [[ -n "$QCLIENT" ]]; then
-    CLIENTCERT="/opt/tak/certs/files/${QCLIENT}"
+    CLIENT_CERT_PATH="/opt/tak/certs/files/${QCLIENT}"
     echo "Selected $QCLIENT as admin cert"
     break
   else
     echo "Invalid selection. Try again."
   fi
  done
-
-#Set path
-CLIENT_CERT_PATH="/opt/tak/certs/files/${CLIENTCERT}"
 
 writeconfig
 
