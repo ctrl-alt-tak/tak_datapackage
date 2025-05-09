@@ -56,11 +56,9 @@ config() {
  CACERT="${TRUSTSTORE_BN%.jks}.p12"
  echo "Available admin certs:"
  mapfile -t P12_CERTS_ADMIN < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*admin*.p12" -exec basename {} \; | sort)
-
  if [ "${#P12_CERTS_ADMIN[@]}" -eq 0 ]; then
   echo "No admin certs found."
  fi
-
  select QWEBADMIN in "${P12_CERTS[@]}"; do
   if [[ -n "$QWEBADMIN" ]]; then
     ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
