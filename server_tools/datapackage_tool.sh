@@ -194,8 +194,8 @@ done
 fi
 
 read -p "Enter Callsign: " CALLSIGN
-echo "Are you using the default cert pass"
-read -p $YELLOW"atakatak (y/n)? "$RESET QPASS
+echo -e "Are you using the ${YELLOW}default cert pass atakatak${RESET}? (y/n)"
+read -p "> " QPASS
 if [[ "$QPASS" != "y" && "$QPASS" != "Y" ]]; then
 read -s -p "Enter Cert Password: " CERT_PASS
 else
