@@ -278,17 +278,29 @@ rm -r ./MANIFEST
 rm -r ./cert
 rm -r ./prefs
 
-#Push datatpackage to server
+# Extract truststore password
 TRUSTSTORE_PASS=$(grep 'keystorePass=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*keystorePass="\([^"]*\)".*/\1/p')
 
-if [-f ${CA_CERT_PATH%.p12}.pem ]; then
-TRUSTSTORE="/opt/tak/certs/files/${TRUSTSTORE_PEM}"
-curl -vvvL POST -H "Content-Type: application/x-zip-compressed" --data-binary "@${zip_filename}" --cert $ADMIN:$CERT_PASS --cert-type P12  --cacert $TRUSTSTORE "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
+# Define the PEM path
+TRUSTSTORE_PEM_PATH="${CA_CERT_PATH%.p12}.pem"
+TRUSTSTORE="/opt/tak/certs/files/$(basename "$TRUSTSTORE_PEM_PATH")"
+
+# Check if PEM exists, else convert
+if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
+  echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
-echo "CA Cert needs to be converted"
-echo "Enter the cert password when promted ${TRUSTSTORE_PASS}"
-openssl pkcs12 -in $CA_CERT_PATH -nokeys -out ${CA_CERT_PATH%.p12}.pem -nodes
+  echo -e "${YELLOW}CA Cert needs to be converted to PEM format.${RESET}"
+  echo -e "Enter the password when prompted: ${TRUSTSTORE_PASS}"
+  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes
 fi
+
+# Upload datapackage via curl
+curl -vvvL -X POST \
+  -H "Content-Type: application/x-zip-compressed" \
+  --data-binary "@${zip_filename}" \
+  --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
+  --cacert "$TRUSTSTORE" \
+  "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
 
 
 
