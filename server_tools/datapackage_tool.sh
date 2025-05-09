@@ -54,7 +54,7 @@ config() {
  TRUSTSTORE_PEM="${TRUSTSTORE_BN%.jks}.pem"
  CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_BN%.jks}.p12"
  CACERT="${TRUSTSTORE_BN%.jks}.p12"
- echo "Admin cert/s found select if prompted"
+ echo "Available admin certs:"
  mapfile -t P12_CERTS_ADMIN < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*admin*.p12" -exec basename {} \; | sort)
  if [ "${#P12_CERTS_ADMIN[@]}" -eq 0 ]; then
   echo "No admin certs found."
@@ -313,15 +313,14 @@ if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
   echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
   echo -e "${YELLOW}Enter the password when prompted:${RESET} ${TRUSTSTORE_PASS}"
-  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes 
-fi
-
-echo -ne "Sending datapackage to server: ["
+  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes
+  echo -ne "Waiting to convert truststore: ["
 for i in {1..10}; do
   echo -ne "#"
   sleep 0.5
 done
-echo "] Sent!"
+echo "] Converted!" 
+fi
 
 # Upload datapackage via curl
 curl -vvvL -k -X POST \
@@ -329,7 +328,7 @@ curl -vvvL -k -X POST \
   --data-binary "@${ZIP_FILENAME}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
   --cacert "$TRUSTSTORE" \
-  "https://localhost:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" &
+  "https://localhost:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" 
 
 
 
