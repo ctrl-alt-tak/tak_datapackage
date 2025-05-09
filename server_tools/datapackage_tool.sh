@@ -54,7 +54,7 @@ config() {
  TRUSTSTORE_PEM="${TRUSTSTORE_BN%.jks}.pem"
  CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_BN%.jks}.p12"
  CACERT="${TRUSTSTORE_BN%.jks}.p12"
- echo "Available admin certs:"
+ echo "Admin cert/s found select if prompted"
  mapfile -t P12_CERTS_ADMIN < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*admin*.p12" -exec basename {} \; | sort)
  if [ "${#P12_CERTS_ADMIN[@]}" -eq 0 ]; then
   echo "No admin certs found."
