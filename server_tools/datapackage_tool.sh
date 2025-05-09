@@ -43,8 +43,8 @@ source ./.serverconfig
 config() {
  read -p "Enter Server Name: " TAK_SERVER_NAME
  read -p "Enter TAK Server IP Address: " TAK_SERVER_IP
- read -p "Is the server configured on the default port (y/n)? " qport
-  if [[ "$qport" != "y" && "$qport" != "Y" ]]; then
+ read -p "Is the server configured on the default port (y/n)? " QPORT
+  if [[ "$QPORT" != "y" && "$QPORT" != "Y" ]]; then
    read -p "Enter Server Port: " TAK_SERVER_PORT
   else
    TAK_SERVER_PORT="8089"
@@ -54,9 +54,22 @@ config() {
  TRUSTSTORE_PEM="${TRUSTSTORE_BN%.jks}.pem"
  CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_BN%.jks}.p12"
  CACERT="${TRUSTSTORE_BN%.jks}.p12"
- ls /opt/tak/certs/files | grep "admin"
- read -p "Enter webadmin cert name (.p12): " QWEBADMIN
- ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
+ echo "Available admin certs:"
+ mapfile -t P12_CERTS_ADMIN < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*admin*.p12" -exec basename {} \; | sort)
+
+ if [ "${#P12_CERTS_ADMIN[@]}" -eq 0 ]; then
+  echo "No admin certs found."
+ fi
+
+ select QWEBADMIN in "${P12_CERTS[@]}"; do
+  if [[ -n "$QWEBADMIN" ]]; then
+    ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
+    echo "Selected $QWEBADMIN as admin cert"
+    break
+  else
+    echo "Invalid selection. Try again."
+  fi
+ done
 }
 
 makeCertnonFips() {
@@ -158,8 +171,8 @@ if grep -q "$START" "$CONFIG"; then
   echo "CA Cert: $CACERT"
   echo "CA Cert Path: $CA_CERT_PATH"
   echo "Admin Cert: $ADMIN"
-  read -p "Would you like to edit this config (y/n)? " qconfig
-  if [[ "$qconfig" == "y" || "$qconfig" == "Y" ]]; then
+  read -p "Would you like to edit this config (y/n)? " QCONFIG
+  if [[ "$QCONFIG" == "y" || "$QCONFIG" == "Y" ]]; then
     config
   else
     echo "Moving on..."
@@ -179,15 +192,30 @@ select ROLE in "${ROLES[@]}"; do
 done
 fi
 
-read -p "Enter Callsign: " callsign
+read -p "Enter Callsign: " CALLSIGN
 read -p "Are you using the default cert pass "atakatak" (y/n)? " QPASS
 if [[ "$QPASS" != "y" && "$QPASS" != "Y" ]]; then
 read -s -p "Enter Cert Password: " CERT_PASS
 else
 CERT_PASS="atakatak"
 fi
-ls /opt/tak/certs/files/
-read -p "Enter Client Cert (.p12): " CLIENTCERT
+
+ echo "Available client certs:"
+ mapfile -t P12_CERTS < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*.p12" -exec basename {} \; | sort)
+
+ if [ "${#P12_CERTS[@]}" -eq 0 ]; then
+  echo "No certs found."
+ fi
+
+ select QCLIENT in "${P12_CERTS[@]}"; do
+  if [[ -n "$QCLIENT" ]]; then
+    CLIENTCERT="/opt/tak/certs/files/${QCLIENT}"
+    echo "Selected $QCLIENT as admin cert"
+    break
+  else
+    echo "Invalid selection. Try again."
+  fi
+ done
 
 #Set path
 CLIENT_CERT_PATH="/opt/tak/certs/files/${CLIENTCERT}"
@@ -205,7 +233,7 @@ if [[ ! -f "$CLIENT_CERT_PATH" || ! -f "$CA_CERT_PATH" ]]; then
 fi
 
 # Generate UUID
-uuid_str=$(uuidgen)
+UUID=$(uuidgen)
 
 # Create directories
 mkdir -p cert prefs MANIFEST
@@ -235,20 +263,20 @@ cat <<EOF > "$PREF_FILE"
 </preference>
 <preference version="1" name="com.atakmap.app_preferences">
     <entry key="displayServerConnectionWidget" class="class java.lang.Boolean">true</entry>
-    <entry key="locationCallsign" class="class java.lang.String">${callsign}</entry>
-    <entry key="atakRoleType" class="class java.lang.String">${role}</entry>
+    <entry key="locationCallsign" class="class java.lang.String">${CALLSIGN}</entry>
+    <entry key="atakRoleType" class="class java.lang.String">${ROLE}</entry>
 </preference>
 </preferences>
 EOF
 
 # Generate MANIFEST.xml
-manifest_file="MANIFEST/MANIFEST.xml"
-cat <<EOF > "$manifest_file"
+MANIFEST_FILE="MANIFEST/MANIFEST.xml"
+cat <<EOF > "$MANIFEST_FILE"
 <MissionPackageManifest version="2">
   <Configuration>
-    <Parameter name="uid" value="${uuid_str}"/>
-    <Parameter name="name" value="${callsign}"/>
-    <Parameter name="name" value="${server_name}.zip"/>
+    <Parameter name="uid" value="${UUID}"/>
+    <Parameter name="name" value="${CALLSIGN}"/>
+    <Parameter name="name" value="${TAK_SERVER_NAME}.zip"/>
     <Parameter name="onReceiveDelete" value="true"/>
   </Configuration>
   <Contents>
@@ -260,19 +288,19 @@ cat <<EOF > "$manifest_file"
 EOF
 
 # Zip
-zip_filename="${callsign}.zip"
+ZIP_FILENAME="${CALLSIGN}.zip"
 (
-  zip -r "$zip_filename" cert prefs MANIFEST &>/dev/null
+  zip -r "$ZIP_FILENAME" cert prefs MANIFEST &>/dev/null
 ) 
-echo -e "${GREEN}Datapackage created: ${zip_filename}${RESET}"
+echo -e "${GREEN}Datapackage created: ${ZIP_FILENAME}${RESET}"
 
 # Optional chown
 # uid=1000
 # gid=1001
-# chown "$uid":"$gid" "$zip_filename"
+# chown "$uid":"$gid" "$ZIP_FILENAME"
 
 # Cleanup
-echo -e "${YELLOW}Done! Datapackage for ${callsign} created ${RESET}"
+echo -e "${YELLOW}Done! Datapackage for ${CALLSIGN} created ${RESET}"
 
 rm -r ./MANIFEST
 rm -r ./cert
@@ -296,10 +324,10 @@ fi
 # Upload datapackage via curl
 curl -vvvL -k -X POST \
   -H "Content-Type: application/x-zip-compressed" \
-  --data-binary "@${zip_filename}" \
+  --data-binary "@${ZIP_FILENAME}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
   --cacert "$TRUSTSTORE" \
-  "https://localhost:8443/Marti/sync/upload?name=${zip_filename}&keywords=missionpackage&creatorUid=webadmin"
+  "https://localhost:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" &
 
 
 
