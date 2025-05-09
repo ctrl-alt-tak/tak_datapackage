@@ -59,7 +59,7 @@ config() {
  if [ "${#P12_CERTS_ADMIN[@]}" -eq 0 ]; then
   echo "No admin certs found."
  fi
- select QWEBADMIN in "${P12_CERTS[@]}"; do
+ select QWEBADMIN in "${P12_CERTS_ADMIN[@]}"; do
   if [[ -n "$QWEBADMIN" ]]; then
     ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
     echo "Selected $QWEBADMIN as admin cert"
@@ -313,7 +313,7 @@ if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
   echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
   echo -e "${YELLOW}Enter the password when prompted:${RESET} ${TRUSTSTORE_PASS}"
-  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes &
+  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes 
 fi
 
 echo -ne "Sending datapackage to server: ["
