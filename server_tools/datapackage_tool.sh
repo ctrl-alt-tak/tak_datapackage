@@ -313,8 +313,15 @@ if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
   echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
   echo -e "${YELLOW}Enter the password when prompted:${RESET} ${TRUSTSTORE_PASS}"
-  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes
+  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes &
 fi
+
+echo -ne "Sending datapackage to server: ["
+for i in {1..10}; do
+  echo -ne "#"
+  sleep 0.5
+done
+echo "] Sent!"
 
 # Upload datapackage via curl
 curl -vvvL -k -X POST \
