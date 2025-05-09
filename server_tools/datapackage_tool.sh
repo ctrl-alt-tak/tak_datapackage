@@ -221,10 +221,6 @@ fi
 
 writeconfig
 
-echo "Client: ${CLIENT_CERT_PATH}"
-echo "CA: ${CA_CERT_PATH}"
-read -p "Press enter to continue: "
-
 # Validate cert file paths
 if [[ ! -f "$CLIENT_CERT_PATH" || ! -f "$CA_CERT_PATH" ]]; then
   echo -e "${RED}Error: One or both certificate files not found!${RESET}"
