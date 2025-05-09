@@ -52,8 +52,8 @@ config() {
  TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
  TRUSTSTORE_BN=$(basename "/opt/tak/${TRUSTSTORE_JKS}")
  TRUSTSTORE_PEM="${TRUSTSTORE_BN%.jks}.pem"
- CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_JKS%.jks}.p12"
- CACERT="${TRUSTSTORE_BN%.jks}"
+ CA_CERT_PATH="/opt/tak/certs/files/${TRUSTSTORE_BN%.jks}.p12"
+ CACERT="${TRUSTSTORE_BN%.jks}.p12"
  ls /opt/tak/certs/files | grep "admin"
  read -p "Enter webadmin cert name (.p12): " QWEBADMIN
  ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
