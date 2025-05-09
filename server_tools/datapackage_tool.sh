@@ -179,6 +179,9 @@ else
   config
 fi
 
+# Adding break for organization.
+echo "===  USER CONFIGURATION ==="
+
 # Add role
 read -p "Add user Role (y/n)? " QROLE
 if [[ "$QROLE" != "n" && "$QROLE" != "N" ]]; then
