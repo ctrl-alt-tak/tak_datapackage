@@ -183,7 +183,7 @@ fi
 echo "===  USER CONFIGURATION ==="
 
 # Add role
-read -p "Add user Role (y/n)? " QROLE
+read -p -e "Add user Role (y/n)? " QROLE
 if [[ "$QROLE" != "n" && "$QROLE" != "N" ]]; then
 echo "Select Role:"
 ROLES=("Team Member" "Team Lead" "HQ" "Sniper" "Medic" "Forward Observer" "RTO" "K9")
