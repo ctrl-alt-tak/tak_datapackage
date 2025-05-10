@@ -333,7 +333,7 @@ curl -vvvL -k -X POST \
   --data-binary "@${ZIP_FILENAME}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
   --cacert "$TRUSTSTORE" \
-  "https://${TAK_SERVER_IP}:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" &
+  "https://${TAK_SERVER_IP}:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" 
 
 sleep 3
 
