@@ -328,7 +328,7 @@ done
 echo "]"
 
 # Upload datapackage via curl
-curl -vvvL -k -X POST \
+curl -vvvL -k POST \
   -H "Content-Type: application/x-zip-compressed" \
   --data-binary "@${ZIP_FILENAME}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
