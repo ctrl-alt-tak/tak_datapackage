@@ -44,11 +44,11 @@ config() {
  read -p "Enter Server Name: " TAK_SERVER_NAME
  read -p "Enter TAK Server IP Address: " TAK_SERVER_IP
  read -p "Is the server configured on the default port (y/n)? " QPORT
-  if [[ "$QPORT" != "y" && "$QPORT" != "Y" ]]; then
-   read -p "Enter Server Port: " TAK_SERVER_PORT
-  else
-   TAK_SERVER_PORT="8089"
-  fi
+ if [[ "$QPORT" != "y" && "$QPORT" != "Y" ]]; then
+  read -p "Enter Server Port: " TAK_SERVER_PORT
+ else
+  TAK_SERVER_PORT="8089"
+ fi
  TRUSTSTORE_JKS=$(grep 'truststoreFile=' "/opt/tak/CoreConfig.xml" | grep -v 'fed-truststore' | sed -n 's/.*truststoreFile="\([^"]*\)".*/\1/p')
  TRUSTSTORE_BN=$(basename "/opt/tak/${TRUSTSTORE_JKS}")
  TRUSTSTORE_PEM="${TRUSTSTORE_BN%.jks}.pem"
@@ -64,7 +64,7 @@ config() {
     ADMIN="/opt/tak/certs/files/${QWEBADMIN}"
     echo "Selected $QWEBADMIN as admin cert"
     break
-  else
+   else
     echo "Invalid selection. Try again."
   fi
  done
@@ -79,25 +79,24 @@ makeCert () {
 }
 
 writeconfig () {
-  # Remove old add new.
 if grep -q "$START" "$CONFIG"; then
   sed -i "/$START/,/$END/d" "$CONFIG"
 fi
 if [[ -n "$TAK_SERVER_NAME" && -n "$TAK_SERVER_IP" && -n "$TAK_SERVER_PORT" ]]; then
-  cat <<EOF >> "$CONFIG"
-$START
-export TAK_SERVER_NAME="$TAK_SERVER_NAME"
-export TAK_SERVER_IP="$TAK_SERVER_IP"
-export TAK_SERVER_PORT="$TAK_SERVER_PORT"
-export CACERT="$CACERT"
-export ADMIN="$ADMIN"
-export CA_CERT_PATH="$CA_CERT_PATH"
-$END
+ cat <<EOF >> "$CONFIG"
+ $START
+ export TAK_SERVER_NAME="$TAK_SERVER_NAME"
+ export TAK_SERVER_IP="$TAK_SERVER_IP"
+ export TAK_SERVER_PORT="$TAK_SERVER_PORT"
+ export CACERT="$CACERT"
+ export ADMIN="$ADMIN"
+ export CA_CERT_PATH="$CA_CERT_PATH"
+ $END
 EOF
   echo "TAK environment variables set"
-else
+ else
   echo "Values not set try again"
-fi
+ fi
 }
 
 
@@ -172,11 +171,11 @@ if grep -q "$START" "$CONFIG"; then
   read -p "Would you like to edit this config (y/n)? " QCONFIG
   if [[ "$QCONFIG" == "y" || "$QCONFIG" == "Y" ]]; then
     config
-  else
+   else
     echo "Moving on..."
   fi
 else
-  config
+ config
 fi
 
 # Adding break for organization.
@@ -185,11 +184,11 @@ echo "===  USER CONFIGURATION ==="
 # Add role
 read -p "Add user Role (y/n)? " QROLE
 if [[ "$QROLE" != "n" && "$QROLE" != "N" ]]; then
-echo "Select Role:"
-ROLES=("Team Member" "Team Lead" "HQ" "Sniper" "Medic" "Forward Observer" "RTO" "K9")
+ echo "Select Role:"
+ ROLES=("Team Member" "Team Lead" "HQ" "Sniper" "Medic" "Forward Observer" "RTO" "K9")
 select ROLE in "${ROLES[@]}"; do
-  [[ -n "$ROLE" ]] && break
-  echo "Invalid selection, try again."
+ [[ -n "$ROLE" ]] && break
+ echo "Invalid selection, try again."
 done
 fi
 
@@ -197,34 +196,33 @@ read -p "Enter Callsign: " CALLSIGN
 echo -e "Are you using the ${YELLOW}default cert pass atakatak${RESET}? (y/n)"
 read -p "> " QPASS
 if [[ "$QPASS" != "y" && "$QPASS" != "Y" ]]; then
-read -s -p "Enter Cert Password: " CERT_PASS
+ read -s -p "Enter Cert Password: " CERT_PASS
 else
-CERT_PASS="atakatak"
+ CERT_PASS="atakatak"
 fi
 
- echo "Available client certs:"
- mapfile -t P12_CERTS < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*.p12" -exec basename {} \; | sort)
+echo "Available client certs:"
+mapfile -t P12_CERTS < <(find /opt/tak/certs/files/ -maxdepth 1 -type f -name "*.p12" -exec basename {} \; | sort)
+if [ "${#P12_CERTS[@]}" -eq 0 ]; then
+ echo "No certs found."
+fi
 
- if [ "${#P12_CERTS[@]}" -eq 0 ]; then
-  echo "No certs found."
- fi
-
- select QCLIENT in "${P12_CERTS[@]}"; do
-  if [[ -n "$QCLIENT" ]]; then
-    CLIENT_CERT_PATH="/opt/tak/certs/files/${QCLIENT}"
-    echo "Selected $QCLIENT as admin cert"
-    break
-  else
-    echo "Invalid selection. Try again."
-  fi
- done
+select QCLIENT in "${P12_CERTS[@]}"; do
+if [[ -n "$QCLIENT" ]]; then
+ CLIENT_CERT_PATH="/opt/tak/certs/files/${QCLIENT}"
+ echo "Selected $QCLIENT as admin cert"
+break
+else
+ echo "Invalid selection. Try again."
+fi
+done
 
 writeconfig
 
 # Validate cert file paths
 if [[ ! -f "$CLIENT_CERT_PATH" || ! -f "$CA_CERT_PATH" ]]; then
-  echo -e "${RED}Error: One or both certificate files not found!${RESET}"
-  exit 1
+ echo -e "${RED}Error: One or both certificate files not found!${RESET}"
+ exit 1
 fi
 
 # Generate UUID
@@ -234,8 +232,8 @@ UUID=$(uuidgen)
 mkdir -p cert prefs MANIFEST
 
 (
-  cp "$CLIENT_CERT_PATH" "cert/$(basename "$CLIENT_CERT_PATH")"
-  cp "$CA_CERT_PATH" "cert/$(basename "$CA_CERT_PATH")"
+ cp "$CLIENT_CERT_PATH" "cert/$(basename "$CLIENT_CERT_PATH")"
+ cp "$CA_CERT_PATH" "cert/$(basename "$CA_CERT_PATH")"
 ) 
 echo -e "${GREEN}Certificates copied.${RESET}"
 
@@ -243,8 +241,8 @@ echo -e "${GREEN}Certificates copied.${RESET}"
 PREF_FILE="prefs/${TAK_SERVER_NAME}.pref"
 cat <<EOF > "$PREF_FILE"
 <?xml version='1.0' standalone='yes'?>
-<preferences>
-<preference version="1" name="cot_streams">
+ <preferences>
+ <preference version="1" name="cot_streams">
     <entry key="count" class="class java.lang.Integer">1</entry>
     <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
@@ -255,12 +253,12 @@ cat <<EOF > "$PREF_FILE"
      <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">true</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
-</preference>
-<preference version="1" name="com.atakmap.app_preferences">
+ </preference>
+ <preference version="1" name="com.atakmap.app_preferences">
     <entry key="displayServerConnectionWidget" class="class java.lang.Boolean">true</entry>
     <entry key="locationCallsign" class="class java.lang.String">${CALLSIGN}</entry>
     <entry key="atakRoleType" class="class java.lang.String">${ROLE}</entry>
-</preference>
+ </preference>
 </preferences>
 EOF
 
@@ -289,7 +287,7 @@ EOF
 # Zip
 ZIP_FILENAME="${CALLSIGN}.zip"
 (
-  zip -r "$ZIP_FILENAME" cert prefs MANIFEST &>/dev/null
+ zip -r "$ZIP_FILENAME" cert prefs MANIFEST &>/dev/null
 ) 
 echo -e "${GREEN}Datapackage created: ${ZIP_FILENAME}${RESET}"
 
@@ -322,18 +320,18 @@ fi
   
 echo -ne "Sending $ZIP_FILENAME to $TAK_SERVER_NAME: ["
 for i in {1..10}; do
-echo -ne "#"
-sleep 0.5
+ echo -ne "#"
+ sleep 0.5
 done
 echo "]"
 
 # Upload datapackage via curl
 curl -vvvL -k POST \
-  -H "Content-Type: application/x-zip-compressed" \
-  --data-binary "@${ZIP_FILENAME}" \
-  --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
-  --cacert "$TRUSTSTORE" \
-  "https://${TAK_SERVER_IP}:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" 
+ -H "Content-Type: application/x-zip-compressed" \
+ --data-binary "@${ZIP_FILENAME}" \
+ --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
+ --cacert "$TRUSTSTORE" \
+ "https://${TAK_SERVER_IP}:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" 
 
 sleep 3
 
