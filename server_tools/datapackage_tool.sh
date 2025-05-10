@@ -249,10 +249,10 @@ cat <<EOF > "$PREF_FILE"
     <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
     <entry key="connectString0" class="class java.lang.String">${TAK_SERVER_IP}:${TAK_SERVER_PORT}:ssl</entry>
-    <entry key="caLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CA_CERT_PATH")</entry>
+    <entry key="caLocation0" class="class java.lang.String">/cert/$(basename "$CA_CERT_PATH")</entry>
     <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
-    <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
-    <entry key="certificateLocation0" class="class java.lang.String">/sdcard/atak/cert/$(basename "$CLIENT_CERT_PATH")</entry>
+    <entry key="certificateLocation0" class="class java.lang.String">/cert/$(basename "$CLIENT_CERT_PATH")</entry>
+     <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">true</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
 </preference>
@@ -277,7 +277,11 @@ cat <<EOF > "$MANIFEST_FILE"
   <Contents>
     <Content ignore="false" zipEntry="prefs/${TAK_SERVER_NAME}.pref"/>
     <Content ignore="false" zipEntry="cert/$(basename "$CA_CERT_PATH")"/>
+      <Parameter name="contentType" value="P12 Certificate"/>
+    </Content>
     <Content ignore="false" zipEntry="cert/$(basename "$CLIENT_CERT_PATH")"/>
+      <Parameter name="contentType" value="P12 Certificate"/>
+    </Content>
   </Contents>
 </MissionPackageManifest>
 EOF
@@ -329,11 +333,12 @@ curl -vvvL -k -X POST \
   --data-binary "@${ZIP_FILENAME}" \
   --cert "$ADMIN:$CERT_PASS" --cert-type P12 \
   --cacert "$TRUSTSTORE" \
-  "https://localhost:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" &
+  "https://${TAK_SERVER_IP}:8443/Marti/sync/upload?name=${ZIP_FILENAME}&keywords=missionpackage&creatorUid=webadmin" &
 
-sleep 0.5
+sleep 3
 
-echo "$ZIP_FILENAME sent to server, view the file at "https://${TAK_SERVER_IP}:8443/Marti/FileManager.html"
+echo "$ZIP_FILENAME sent to server, view the file at https://${TAK_SERVER_IP}:8443/Marti/FileManager.html"
+
 
 
 
