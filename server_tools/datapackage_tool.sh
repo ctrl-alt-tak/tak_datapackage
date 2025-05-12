@@ -246,16 +246,16 @@ cat <<EOF > "$PREF_FILE"
     <entry key="count" class="class java.lang.Integer">1</entry>
     <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
+    <entry key="caLocation0" class="class java.lang.String">/cert/$(basename "$CA_CERT_PATH")</entry>
+    <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
+    <entry key="certificateLocation0" class="class java.lang.String">/cert/$(basename "$CLIENT_CERT_PATH")</entry>
+    <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="connectString0" class="class java.lang.String">${TAK_SERVER_IP}:${TAK_SERVER_PORT}:ssl</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">false</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
  </preference>
  <preference version="1" name="com.atakmap.app_preferences">
     <entry key="displayServerConnectionWidget" class="class java.lang.Boolean">true</entry>
-    <entry key="caLocation0" class="class java.lang.String">/cert/$(basename "$CA_CERT_PATH")</entry>
-    <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
-    <entry key="certificateLocation0" class="class java.lang.String">/cert/$(basename "$CLIENT_CERT_PATH")</entry>
-    <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="locationCallsign" class="class java.lang.String">${CALLSIGN}</entry>
     <entry key="atakRoleType" class="class java.lang.String">${ROLE}</entry>
  </preference>
