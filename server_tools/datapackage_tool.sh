@@ -246,10 +246,10 @@ cat <<EOF > "$PREF_FILE"
     <entry key="count" class="class java.lang.Integer">1</entry>
     <entry key="description0" class="class java.lang.String">${TAK_SERVER_NAME}</entry>
     <entry key="enabled0" class="class java.lang.Boolean">true</entry>
-    <entry key="caLocation0" class="class java.lang.String">/cert/$(basename "$CA_CERT_PATH")</entry>
-    <entry key="caPassword0" class="class java.lang.String">${CERT_PASS}</entry>
-    <entry key="certificateLocation0" class="class java.lang.String">/cert/$(basename "$CLIENT_CERT_PATH")</entry>
-    <entry key="clientPassword0" class="class java.lang.String">${CERT_PASS}</entry>
+    <entry key="caLocation" class="class java.lang.String">/cert/$(basename "$CA_CERT_PATH")</entry>
+    <entry key="caPassword" class="class java.lang.String">${CERT_PASS}</entry>
+    <entry key="certificateLocation" class="class java.lang.String">/cert/$(basename "$CLIENT_CERT_PATH")</entry>
+    <entry key="clientPassword" class="class java.lang.String">${CERT_PASS}</entry>
     <entry key="connectString0" class="class java.lang.String">${TAK_SERVER_IP}:${TAK_SERVER_PORT}:ssl</entry>
     <entry key="useAuth0" class="class java.lang.Boolean">false</entry>
     <entry key="cacheCreds0" class="class java.lang.String">Cache credentials</entry>
@@ -314,8 +314,7 @@ TRUSTSTORE="/opt/tak/certs/files/$(basename "$TRUSTSTORE_PEM_PATH")"
 if [[ -f "$TRUSTSTORE_PEM_PATH" ]]; then
   echo -e "${GREEN}Using existing PEM truststore: ${TRUSTSTORE}${RESET}"
 else
-  echo -e "${YELLOW}Enter the password when prompted:${RESET} ${TRUSTSTORE_PASS}"
-  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes 
+  openssl pkcs12 -in "$CA_CERT_PATH" -nokeys -out "$TRUSTSTORE_PEM_PATH" -nodes -passin pass:$TRUSTSTORE_PASS 
 fi
   
 echo -ne "Sending $ZIP_FILENAME to $TAK_SERVER_NAME: ["
