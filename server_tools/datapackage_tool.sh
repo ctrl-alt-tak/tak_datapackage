@@ -282,6 +282,9 @@ cat <<EOF > "$MANIFEST_FILE"
     <Content ignore="false" zipEntry="cert/$(basename "$CLIENT_CERT_PATH")"/>
       <Parameter name="contentType" value="P12 Certificate"/>
     </Content>
+    <Content ignore="false" zipEntry="Imagery/base_world.sqlite"/>
+    <Content ignore="false" zipEntry="Imagery/CONUS_base.sqlite"/>
+    <Content ignore="false" zipEntry="Imagery/mapsources/googleHybrid.xml"/>
   </Contents>
 </MissionPackageManifest>
 EOF
@@ -289,7 +292,7 @@ EOF
 # Zip
 ZIP_FILENAME="${CALLSIGN}.zip"
 (
- zip -r "$ZIP_FILENAME" cert prefs MANIFEST &>/dev/null
+ zip -r "$ZIP_FILENAME" cert prefs MANIFEST Imagery &>/dev/null
 ) 
 echo -e "${GREEN}Datapackage created: ${ZIP_FILENAME}${RESET}"
 
@@ -336,7 +339,7 @@ curl -vvvL -k POST \
 
 sleep 3
 
-echo "$ZIP_FILENAME sent to server, view the file at https://${TAK_SERVER_IP}:8443/Marti/FileManager.html"
+echo -e "$ZIP_FILENAME sent to server, view the file at https://${TAK_SERVER_IP}:8443/Marti/FileManager.html"
 
 
 
